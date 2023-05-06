@@ -38,3 +38,5 @@ log/
 *.pid
 *.orig
 temp/
+
+.gitignore
