@@ -40,3 +40,6 @@ log/
 temp/
 
 *.gitignore
+
+#test
+test/
