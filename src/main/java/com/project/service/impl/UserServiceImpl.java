@@ -2,6 +2,8 @@ package com.project.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.project.common.ErrorCode;
+import com.project.exception.BusinessException;
 import com.project.pojo.User;
 import com.project.service.UserService;
 import com.project.mapper.UserMapper;
@@ -11,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,18 +32,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private static final String SALT = "password";
 
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword) {
+    public long userRegister(String userAccount, String userPassword, String checkPassword, String planetCode) {
         //1.用户校验
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
-            return -1;
+            throw new BusinessException(ErrorCode.NULL_ERROR,"账号，密码或者校验密码为空");
         }
         if (userAccount.length() < 4) {
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
         }
         if (userPassword.length() < 8 || checkPassword.length() < 8 ) {
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
+
         }
 
+
+        //校验编码
+        Date date = new Date();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd");
+        if(planetCode.length() != 8){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "校验编码过长或者过短");
+        }
+        if(!simpleDateFormat.format(date).equals(planetCode)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "校验编码错误");
+        }
         //不包含特殊字符
         String regEx = "[ _`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]|\n|\r|\t";
         Pattern p = Pattern.compile(regEx);
@@ -61,6 +76,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return -1;
         }
 
+        //校验两次密码
         if(! userPassword.equals(checkPassword)){
             return -1;
         }
@@ -71,6 +87,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = new User();
         user.setUserAccount(userAccount);
         user.setUserPassword(encryptPassword);
+        user.setPlanetCode(planetCode);
         user.setAvatarUrl("https://pngimg.com/uploads/github/github_PNG40.png");
         boolean saveResult = this.save(user);
         if (!saveResult) {
@@ -140,7 +157,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         safetyUser.setUserStatus(originUser.getUserStatus());
         safetyUser.setCreateTime(originUser.getCreateTime());
         safetyUser.setUserRole(originUser.getUserRole());
+        safetyUser.setPlanetCode(originUser.getPlanetCode());
         return safetyUser;
+    }
+
+    @Override
+    public int userLoginOut(HttpServletRequest request){
+        //移除session
+        request.getSession().removeAttribute(USER_LOGIN_STATE);
+        return 1;
     }
 }
 

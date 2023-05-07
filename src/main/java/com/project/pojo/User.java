@@ -82,6 +82,11 @@ public class User implements Serializable {
      */
     private Integer userRole;
 
+    /**
+     * 校验编号 没想好怎么设计
+     */
+    private  String planetCode;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

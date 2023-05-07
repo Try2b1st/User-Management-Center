@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 @SpringBootTest
@@ -36,43 +38,55 @@ class ProjectApplicationTests {
         String userAccount = "bilibili";
         String userPassword = "";
         String checkPassword = "123456789";
+        String planetCode = "20230507";
 
         //判空
-        long result = userService.userRegister(userAccount,userPassword,checkPassword);
+        long result = userService.userRegister(userAccount,userPassword,checkPassword,planetCode);
         Assertions.assertEquals(-1,result);
 
         //账号长度
         userAccount = "sb";
-        result = userService.userRegister(userAccount,userPassword,checkPassword);
+        result = userService.userRegister(userAccount,userPassword,checkPassword,planetCode);
         Assertions.assertEquals(-1,result);
 
         //密码长度
         userPassword = "123456";
-        result = userService.userRegister(userAccount,userPassword,checkPassword);
+        result = userService.userRegister(userAccount,userPassword,checkPassword,planetCode);
         Assertions.assertEquals(-1,result);
 
         //判断账号是否有特殊字符
         userAccount = "bili bili";
-        result = userService.userRegister(userAccount,userPassword,checkPassword);
+        result = userService.userRegister(userAccount,userPassword,checkPassword,planetCode);
         Assertions.assertEquals(-1,result);
 
         //两次密码不相同
         userPassword = "222233338";
         checkPassword = "5555555555";
-        result = userService.userRegister(userAccount,userPassword,checkPassword);
+        result = userService.userRegister(userAccount,userPassword,checkPassword, planetCode);
         Assertions.assertEquals(-1,result);
 
         //账号以注册过
         userAccount = "root";
-        result = userService.userRegister(userAccount,userPassword,checkPassword);
+        result = userService.userRegister(userAccount,userPassword,checkPassword,planetCode);
         Assertions.assertEquals(-1,result);
 
         //正常插入
         userAccount = "bilibili";
         userPassword = "222233335";
         checkPassword = "222233335";
-        result = userService.userRegister(userAccount,userPassword,checkPassword);
+        result = userService.userRegister(userAccount,userPassword,checkPassword,planetCode);
         Assertions.assertTrue(result > 0);
     }
 
+    @Test
+    void testCode(){
+        Date date =new Date();
+        System.out.println(date);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd");
+        if(simpleDateFormat.format(date).equals("qweasd")){
+            System.out.println("hhh");
+        }else{
+            System.out.println("hgg");
+        }
+    }
 }
