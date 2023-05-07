@@ -71,6 +71,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = new User();
         user.setUserAccount(userAccount);
         user.setUserPassword(encryptPassword);
+        user.setAvatarUrl("https://pngimg.com/uploads/github/github_PNG40.png");
         boolean saveResult = this.save(user);
         if (!saveResult) {
             return -1;
