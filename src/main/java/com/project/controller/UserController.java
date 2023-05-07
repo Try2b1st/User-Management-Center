@@ -97,6 +97,23 @@ public class UserController {
     }
 
     /**
+     * 当登陆后，返回用户在数据库中的信息（脱敏）
+     *
+     * @param request 我们将用户信息放到session中
+     * @return 返回用户在数据库中的信息（脱敏）
+     */
+    @GetMapping("/current")
+    public User getCurrentUser(HttpServletRequest request){
+        Object objUser = request.getSession().getAttribute(USER_LOGIN_STATE);
+        User currentUser = (User) objUser;
+        if(currentUser == null){
+            return null;
+        }
+        User user = userService.getById(currentUser.getId());
+        return userService.getSafetyUser(user);
+    }
+
+    /**
      * 管理员权限 删除用户
      *
      * @param id 用户id
