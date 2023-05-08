@@ -44,4 +44,4 @@ temp/
 #test
 test
 
-.yml
+*.yml
