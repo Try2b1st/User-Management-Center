@@ -48,7 +48,7 @@ public class UserController {
         String planetCode = userRegisterRequest.getPlanetCode();
 
         if (StringUtils.isAnyBlank(userAccount, userPassword, userCheckPassword, planetCode)) {
-            return new BaseResponse<>(1, null, "data have null");
+            throw new BusinessException(ErrorCode.NULL_ERROR,"请求参数为空");
         }
 
         Long result = userService.userRegister(userAccount, userPassword, userCheckPassword, planetCode);
@@ -65,16 +65,15 @@ public class UserController {
     @PostMapping("/login")
     public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
         if (userLoginRequest == null) {
-            return null;
+            throw new BusinessException(ErrorCode.NULL_ERROR,"请求参数为空");
         }
 
         String userAccount = userLoginRequest.getUserAccount();
         String userPassword = userLoginRequest.getUserPassword();
 
         if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-            return null;
+            throw new BusinessException(ErrorCode.NULL_ERROR,"请求参数为空");
         }
-
         User user = userService.userLogin(userAccount, userPassword, request);
         return ResultUtils.success(user);
     }
@@ -88,7 +87,7 @@ public class UserController {
     @PostMapping("loginOut")
     public BaseResponse<Integer> userLoginOut(HttpServletRequest request) {
         if (request == null) {
-            return null;
+            throw new BusinessException(ErrorCode.NULL_ERROR,"请求参数为空");
         }
         return ResultUtils.success(userService.userLoginOut(request));
     }
@@ -103,11 +102,10 @@ public class UserController {
     @GetMapping("/search")
     public BaseResponse<List<User>> searchUser(String username, HttpServletRequest request) {
         if (isNotAdminRole(request)) {
-            return null;
+            throw new BusinessException(ErrorCode.NO_AUTH,"你不是项目的管理");
         }
 
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-
         if (StringUtils.isNoneBlank(username)) {
             queryWrapper.like("username", username);
         }
@@ -128,7 +126,7 @@ public class UserController {
         Object objUser = request.getSession().getAttribute(USER_LOGIN_STATE);
         User currentUser = (User) objUser;
         if (currentUser == null) {
-            return null;
+            throw new BusinessException(ErrorCode.NOT_LOGIN,"无法获取当前用户的登录态");
         }
         User user = userService.getById(currentUser.getId());
         return ResultUtils.success(userService.getSafetyUser(user));
@@ -143,10 +141,10 @@ public class UserController {
     @PostMapping("/delete")
     public BaseResponse<Boolean> deleteUser(@RequestBody long id, HttpServletRequest request) {
         if (isNotAdminRole(request)) {
-            return null;
+            throw new BusinessException(ErrorCode.NO_AUTH,"你没有权限删除任何一名用户");
         }
         if (id < 0) {
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"该名用户不存在");
         }
         Boolean result = userService.removeById(id);
         return ResultUtils.success(result);

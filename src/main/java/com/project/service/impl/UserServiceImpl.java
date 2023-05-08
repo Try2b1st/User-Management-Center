@@ -2,7 +2,9 @@ package com.project.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.project.common.BaseResponse;
 import com.project.common.ErrorCode;
+import com.project.common.ResultUtils;
 import com.project.exception.BusinessException;
 import com.project.pojo.User;
 import com.project.service.UserService;
@@ -65,7 +67,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
          * @return true为包含，false为不包含
          */
         if (m.find()) {
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户名含有特殊字符！");
         }
 
         //用户名不能重复
@@ -73,12 +75,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.eq("userAccount", userAccount);
         long count = this.count(queryWrapper);
         if (count > 0) {
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户名太热门，请更换！");
+
         }
 
         //校验两次密码
         if(! userPassword.equals(checkPassword)){
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"两次密码不相同");
+
         }
 
         //2.密码加密
@@ -88,10 +92,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setUserAccount(userAccount);
         user.setUserPassword(encryptPassword);
         user.setPlanetCode(planetCode);
+        //为用户设置默认头像
         user.setAvatarUrl("https://pngimg.com/uploads/github/github_PNG40.png");
         boolean saveResult = this.save(user);
         if (!saveResult) {
-            return -1;
+            log.error("数据库插入错误，请尽快联系代码维护工作人员!!!");
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"系统繁忙，请稍等");
+
         }
         return user.getId();
     }
@@ -100,13 +107,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public User userLogin(String userAccount, String userPassword, HttpServletRequest request) {
         //1.用户校验
         if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-            return null;
+            throw new BusinessException(ErrorCode.NULL_ERROR,"请求参数为空");
         }
         if (userAccount.length() < 4) {
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户名过短");
         }
         if (userPassword.length() < 8) {
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"密码过短");
         }
 
         //不包含特殊字符
@@ -119,20 +126,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
          * @return true为包含，false为不包含
          */
         if (m.find()) {
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户名包含特殊字符");
         }
 
         //2.密码加密
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
 
-        //用户名不能重复
+        //用户是否已经注册,数据是否在数据库中
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userAccount", userAccount);
         queryWrapper.eq("userPassword", encryptPassword);
         User user = this.getOne(queryWrapper);
         if(user == null){
             log.info("user login failed, userAccount cannot match userPassword");
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户不存在！是否已经注册给账号？");
         }
         //3.用户脱敏
         User safetyUser = getSafetyUser(user);
@@ -144,7 +151,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public User getSafetyUser(User originUser){
         if(originUser == null){
-            return null;
+            throw new BusinessException(ErrorCode.NULL_ERROR,"脱敏用户参数为空");
         }
         User safetyUser = originUser;
         safetyUser.setId(originUser.getId());
